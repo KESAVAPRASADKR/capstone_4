@@ -4,131 +4,100 @@ import pandas as pd
 import numpy as np
 
 # Load models and columns used for training
-with open('model.pkl', 'rb') as f:
+with open('model_regression.pkl', 'rb') as f:
     reg_model = pickle.load(f)
 
-with open('model_2.pkl', 'rb') as f:
+with open('model_classifer.pkl', 'rb') as f:
     clf_model = pickle.load(f)
 
-with open('X_reg_columns.pkl', 'rb') as f:
-    X_reg_columns = pickle.load(f)
-
-with open('X_clf_columns.pkl', 'rb') as f:
-    X_clf_columns = pickle.load(f)
-
-st.title('Copper Industry Price and Lead Prediction')
+st.title('Industry Copper Price Prediction')
 
 # Task selection
 task = st.selectbox('Select Task', ['Regression', 'Classification'])
 
-def preprocess_input(input_data, model_columns):
-    # Handle missing values
-    
-    
-    # Impute missing values
-    for column in input_data.select_dtypes(include=['float64', 'int64']).columns:
-        input_data[column] = input_data[column].fillna(input_data[column].median())
-    
-    for column in input_data.select_dtypes(include=['object']).columns:
-        input_data[column] = input_data[column].fillna(input_data[column].mode()[0])
-    
-    # Check for skewness and apply log transformation
-    numerical_cols = input_data.select_dtypes(include=['float64', 'int64']).columns
-    skewed_cols = input_data[numerical_cols].apply(lambda x: x.skew()).sort_values(ascending=False)
-    skewed_cols = skewed_cols[skewed_cols > 0.75]
-    for col in skewed_cols.index:
-        input_data[col] = np.log1p(input_data[col])
-    
-    # Encode categorical variables
-    categorical_cols = ['customer', 'country', 'item type', 'application', 'product_ref']
-    input_data = pd.get_dummies(input_data, columns=categorical_cols)
-    
-    # Reindex to ensure all necessary columns are present
-    input_data = input_data.reindex(columns=model_columns, fill_value=0)
-    
-    return input_data
-
 # Input fields
 if task == 'Regression':
-    item_day = st.number_input('Enter item day', min_value=0.0)
-    item_month = st.number_input('Enter item month', min_value=0.0)
-    item_year = st.number_input('Enter item year', min_value=0.0)
-    customer = st.text_input('Customer')
-    country = st.text_input('Country')
-    item_type = st.text_input('Item Type')
-    application = st.text_input('Application')
-    product_ref = st.text_input('Product Reference')
-    quantity_tons = st.number_input('Quantity Tons', min_value=0.0)
-    thickness = st.number_input('Thickness', min_value=0.0)
-    width = st.number_input('Width', min_value=0.0)
-    d_day = st.number_input('Enter delivery day', min_value=0.0)
-    d_month = st.number_input('Enter delivery month', min_value=0.0)
-    d_year = st.number_input('Enter delivery year', min_value=0.0)
+    col1,col2,col3=st.columns(3)
+    with col1:
+        i_day = st.selectbox('Select item day', options=list(range(1, 32)), index=0)
+        i_month = st.selectbox('Select item month', options=list(range(1, 13)), index=0)
+        i_year = st.number_input('Enter item year', min_value=2020)
+        customer = st.number_input('enter customer number',min_value=12458,max_value=30408185)
+        countries = [28., 32., 38., 78., 27., 30., 25., 77., 79., 39., 40., 26., 84., 80., 113., 107., 89.]
+        country = st.selectbox('Select Country', options=countries)
+        item=[4., 3., 1., 2., 5., 0.]
+        st.write("'W'=5., 'WI'=6., 'S'=3., 'Others'=1., 'PL'=2., 'IPL'=0., 'SLAWR'=4.")
+        item_type = st.selectbox('Select item type', options=item)
+        application = st.number_input('enter  application number',min_value=2,max_value=99)
+    with col2:
+        pass
+    with col3:
+        reference=[1670798778,     611993, 1668701376,  164141591,     628377,
+        1671863738,     640665, 1332077137, 1668701718,     640405,
+        1693867550, 1665572374, 1282007633, 1668701698,     628117,
+        1690738206,  164337175, 1668701725, 1665572032, 1721130331,
+        1693867563,     611733, 1690738219,  929423819]
+        product_ref = st.selectbox('Select product reference', options=reference)
+        quantity_tons = st.number_input('enter quantity',min_value=-18,max_value=151)
+        thickness = st.number_input('enter thickness',min_value=1.0,max_value=6.4)
+        width = st.number_input('enter width',min_value=735,max_value=1880)
+        d_day = st.selectbox('Select delivery day', options=list(range(1, 32)), index=0)
+        d_month = st.selectbox('Select delivery month', options=list(range(1, 13)), index=0)
+        d_year = st.number_input('Enter delivery year', min_value=2020)
+        status=st.number_input('Enter status 0 for win  or 1 for loss',min_value=0,max_value=1)
+ 
 
     # Prepare input data
-    input_data = pd.DataFrame({
-        'item_day': [item_day],
-        'item_month': [item_month],
-        'item_year': [item_year],
-        'customer': [customer],
-        'country': [country],
-        'item type': [item_type],
-        'application': [application],
-        'product_ref': [product_ref],
-        'quantity tons': [quantity_tons],
-        'thickness': [thickness],
-        'width': [width],
-        'd_day': [d_day],
-        'd_month': [d_month],
-        'd_year': [d_year]
-    })
+
+    input_data = pd.DataFrame({'quantity tons': [quantity_tons],'customer': [customer],'country': [country],'status':[status],'item type': [item_type],
+                    'application': [application],'thickness': [thickness],'width': [width],'product_ref': [product_ref],
+                                  'i_day': [i_day],'i_month': [i_month],'i_year': [i_year],'d_day': [d_day],'d_month': [d_month],
+                                  'd_year': [d_year]})
 
     # Preprocess input data
-    input_data = preprocess_input(input_data, X_reg_columns)
-
-    # Make prediction
-    prediction = reg_model.predict(input_data)
-    st.write(f'Predicted Selling Price: {prediction[0]}')
+    if st.button('Submit'):  
+        prediction = reg_model.predict(input_data)
+        st.write(f'Predicted Selling Price: {prediction[0]}')
+    else:
+        st.write('Please enter input data.')
 
 elif task == 'Classification':
-    item_day = st.number_input('Enter item day', min_value=0.0)
-    item_month = st.number_input('Enter item month', min_value=0.0)
-    item_year = st.number_input('Enter item year', min_value=0.0)
-    customer = st.text_input('Customer')
-    country = st.text_input('Country')
-    item_type = st.text_input('Item Type')
-    application = st.text_input('Application')
-    #material_ref = st.text_input('Material Reference')
-    product_ref = st.text_input('Product Reference')
-    quantity_tons = st.number_input('Quantity Tons', min_value=0.0)
-    thickness = st.number_input('Thickness', min_value=0.0)
-    width = st.number_input('Width', min_value=0.0)
-    d_day = st.number_input('Enter delivery day', min_value=0.0)
-    d_month = st.number_input('Enter delivery month', min_value=0.0)
-    d_year = st.number_input('Enter delivery year', min_value=0.0)
-
+    col4,col5,col6=st.columns(3)
+    with col4:
+        i_day = st.selectbox('Select item day', options=list(range(1, 32)), index=0)
+        i_month = st.selectbox('Select item month', options=list(range(1, 13)), index=0)
+        i_year = st.number_input('Enter item year', min_value=2020)
+        customer = st.number_input('enter customer number',min_value=12458,max_value=30408185)
+        countries = [28., 32., 38., 78., 27., 30., 25., 77., 79., 39., 40., 26., 84., 80., 113., 107., 89.]
+        country = st.selectbox('Select Country', options=countries)
+        item=[4., 3., 1., 2., 5., 0.]
+        st.write("'W'=5., 'WI'=6., 'S'=3., 'Others'=1., 'PL'=2., 'IPL'=0., 'SLAWR'=4.")
+        item_type = st.selectbox('Select item type', options=item)
+        application = st.number_input('enter application number',min_value=2,max_value=99)
+    with col5:
+        pass
+    with col6:
+        reference=[1670798778,     611993, 1668701376,  164141591,     628377,
+        1671863738,     640665, 1332077137, 1668701718,     640405,
+        1693867550, 1665572374, 1282007633, 1668701698,     628117,
+        1690738206,  164337175, 1668701725, 1665572032, 1721130331,
+        1693867563,     611733, 1690738219,  929423819]
+        product_ref = st.selectbox('Select product reference', options=reference)
+        quantity_tons = st.number_input('enter quantity',min_value=-18.0,max_value=151.0)
+        thickness = st.number_input('enter thickness',min_value=0.1,max_value=6.4)
+        width = st.number_input('enter width',min_value=735,max_value=1880)
+        d_day = st.selectbox('Select delivery day', options=list(range(1, 32)), index=0)
+        d_month = st.selectbox('Select delivery month', options=list(range(1, 13)), index=0)
+        d_year = st.number_input('Enter delivery year', min_value=2020)
+        selling_price=st.number_input('enter selling price',min_value=0)
     # Prepare input data
-    input_data = pd.DataFrame({
-        'item_day': [item_day],
-        'item_month': [item_month],
-        'item_year': [item_year],
-        'customer': [customer],
-        'country': [country],
-        'item type': [item_type],
-        'application': [application],
-        'product_ref': [product_ref],
-        'quantity tons': [quantity_tons],
-        'thickness': [thickness],
-        'width': [width],
-        'd_day': [d_day],
-        'd_month': [d_month],
-        'd_year': [d_year]
-    })
-
-    # Preprocess input data
-    input_data = preprocess_input(input_data, X_clf_columns)
-
-    # Make prediction
-    prediction = clf_model.predict(input_data)
-    status = 'WON' if prediction[0] == 1 else 'LOST'
-    st.write(f'Predicted Status: {status}')
+    input_data_1 = pd.DataFrame({'quantity tons': [quantity_tons],'customer': [customer],'country': [country],'item type': [item_type],
+                    'application': [application],'thickness': [thickness],'width': [width],'product_ref': [product_ref],
+                                  'i_day': [i_day],'i_month': [i_month],'i_year': [i_year],'d_day': [d_day],'d_month': [d_month],
+                                  'd_year': [d_year],'selling_price':[selling_price]})
+    if st.button('Submit'):  
+        prediction = clf_model.predict(input_data_1)
+        status = 'WON' if prediction[0] == 0. else 'LOST'
+        st.write(f'Predicted Status: {status}')
+    else:
+        st.write('Please enter input data.')
